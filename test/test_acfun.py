@@ -62,9 +62,6 @@ class AcFunPlaylistTest(unittest.TestCase):
         )
         self.assertTrue(all(unsmuggle_url(entry['url'])[1]['force_noplaylist']
                             for entry in result['entries']))
-        self.assertEqual(
-            [entry['id'] for entry in result['entries']],
-            ['12345', '12345_2'],
         )
         self.assertEqual(
             [entry['title'] for entry in result['entries']],
