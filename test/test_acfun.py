@@ -1,7 +1,20 @@
 import json
+import pathlib
+import sys
 import unittest
 
-from test.helper import FakeYDL
+
+def _load_fake_ydl():
+    try:
+        from test.helper import FakeYDL  # type: ignore[attr-defined]
+    except ModuleNotFoundError:
+        root = pathlib.Path(__file__).resolve().parents[1]
+        sys.path.insert(0, str(root))
+        from test.helper import FakeYDL  # type: ignore[attr-defined]
+    return FakeYDL
+
+
+FakeYDL = _load_fake_ydl()
 
 from yt_dlp.extractor.acfun import AcFunVideoIE
 
