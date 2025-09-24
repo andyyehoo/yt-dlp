@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from test.helper import FakeYDL
 
 from yt_dlp.extractor.acfun import AcFunVideoIE
+from yt_dlp.utils import unsmuggle_url
 
 
 class AcFunPlaylistTest(unittest.TestCase):
@@ -53,15 +54,14 @@ class AcFunPlaylistTest(unittest.TestCase):
         self.assertEqual(result['uploader'], 'Uploader Name')
         self.assertEqual(result['uploader_id'], 'uploader-id')
         self.assertEqual(
-            [entry['url'] for entry in result['entries']],
+            [unsmuggle_url(entry['url'])[0] for entry in result['entries']],
             [
                 'https://www.acfun.cn/v/ac12345?foo=bar',
                 'https://www.acfun.cn/v/ac12345_2?foo=bar',
             ],
         )
-        self.assertEqual(
-            [entry['id'] for entry in result['entries']],
-            ['12345', '12345_2'],
+        self.assertTrue(all(unsmuggle_url(entry['url'])[1]['force_noplaylist']
+                            for entry in result['entries']))
         )
         self.assertEqual(
             [entry['title'] for entry in result['entries']],

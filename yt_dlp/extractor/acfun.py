@@ -5,8 +5,10 @@ from ..utils import (
     int_or_none,
     parse_codecs,
     parse_qs,
+    smuggle_url,
     str_or_none,
     traverse_obj,
+    unsmuggle_url,
     update_url_query,
 )
 
@@ -89,6 +91,7 @@ class AcFunVideoIE(AcFunVideoBaseIE):
     }]
 
     def _real_extract(self, url):
+        url, smuggled_data = unsmuggle_url(url, {})
         video_id = self._match_id(url)
 
         webpage = self._download_webpage(url, video_id)
@@ -98,7 +101,7 @@ class AcFunVideoIE(AcFunVideoBaseIE):
         video_list = json_all.get('videoList') or []
         video_internal_id = traverse_obj(json_all, ('currentVideoInfo', 'id'))
         playlist_id = video_id.partition('_')[0]
-        if video_id == playlist_id and len(video_list) > 1 and self._yes_playlist(playlist_id, video_id):
+        if video_id == playlist_id and len(video_list) > 1 and self._yes_playlist(playlist_id, video_id, smuggled_data):
             entries = []
             query = parse_qs(url)
             for idx, part_video_info in enumerate(video_list, start=1):
@@ -106,7 +109,8 @@ class AcFunVideoIE(AcFunVideoBaseIE):
                 part_id = f'{playlist_id}{part_suffix}'
                 entry_url = update_url_query(f'https://www.acfun.cn/v/ac{part_id}', query)
                 entries.append(self.url_result(
-                    entry_url, ie=self.ie_key(), video_id=part_id,
+                    smuggle_url(entry_url, {'force_noplaylist': True}),
+                    ie=self.ie_key(), video_id=part_id,
                     video_title=traverse_obj(part_video_info, 'title')))
 
             return self.playlist_result(
