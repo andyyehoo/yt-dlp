@@ -1,10 +1,12 @@
+from urllib.parse import parse_qs, urlparse
+
 from .common import InfoExtractor
 from ..utils import (
     float_or_none,
     format_field,
     int_or_none,
     parse_codecs,
-    parse_qs,
+    parse_qs as compat_parse_qs,
     str_or_none,
     traverse_obj,
     update_url_query,
@@ -100,7 +102,8 @@ class AcFunVideoIE(AcFunVideoBaseIE):
         playlist_id = video_id.partition('_')[0]
         if video_id == playlist_id and len(video_list) > 1 and self._yes_playlist(playlist_id, video_id):
             entries = []
-            query = parse_qs(url)
+            parsed_url = urlparse(url)
+            query = parse_qs(parsed_url.query, keep_blank_values=True)
             for idx, part_video_info in enumerate(video_list, start=1):
                 part_suffix = '' if idx == 1 else f'_{idx}'
                 part_id = f'{playlist_id}{part_suffix}'
@@ -187,7 +190,7 @@ class AcFunBangumiIE(AcFunVideoBaseIE):
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
-        ac_idx = parse_qs(url).get('ac', [None])[-1]
+        ac_idx = compat_parse_qs(url).get('ac', [None])[-1]
         video_id = f'{video_id}{format_field(ac_idx, None, "__%s")}'
 
         webpage = self._download_webpage(url, video_id)

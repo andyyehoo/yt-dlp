@@ -1,19 +1,12 @@
-#!/usr/bin/env python3
-
-# Allow direct execution
 import json
-import os
-import sys
 import unittest
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from test.helper import FakeYDL
 
 from yt_dlp.extractor.acfun import AcFunVideoIE
 
 
-class AcFunPlaylistTest(unittest.TestCase):
+class TestAcFunPlaylist(unittest.TestCase):
     def setUp(self):
         self.ie = AcFunVideoIE()
         self.ie.set_downloader(FakeYDL({'noplaylist': False}))
@@ -66,7 +59,3 @@ class AcFunPlaylistTest(unittest.TestCase):
         self.assertEqual(entry_ids, ['12345', '12345_2'])
         self.assertEqual(entry_titles, ['Episode 1', 'Episode 2'])
         self.assertTrue(all(entry['ie_key'] == 'AcFunVideo' for entry in result['entries']))
-
-
-if __name__ == '__main__':
-    unittest.main()
