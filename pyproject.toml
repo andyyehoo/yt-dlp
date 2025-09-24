@@ -391,6 +391,9 @@ addopts = [
     "--verbose",
     "--strict-markers",
 ]
+testpaths = [
+    "test",
+]
 markers = [
     "download",
 ]
