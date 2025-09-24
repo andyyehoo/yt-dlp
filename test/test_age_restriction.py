@@ -13,6 +13,10 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
 
+def _is_expected_error(err):
+    return err.exc_info and getattr(err.exc_info[1], 'expected', False)
+
+
 def _download_restricted(url, filename, age):
     """Attempt to download ``url`` while respecting ``age`` restrictions."""
 
@@ -26,33 +30,35 @@ def _download_restricted(url, filename, age):
     ydl.add_default_info_extractors()
     json_filename = os.path.splitext(filename)[0] + '.info.json'
     try_rm(json_filename)
+    downloaded = False
     try:
         ydl.download([url])
-    except DownloadError as err:
-        return False, err
-    else:
-        return os.path.exists(json_filename), None
+        downloaded = os.path.exists(json_filename)
     finally:
         try_rm(json_filename)
+    return downloaded
 
 
 @is_download_test
 class TestAgeRestriction(unittest.TestCase):
     def _assert_restricted(self, url, filename, age, old_age=None):
-        can_download, error = _download_restricted(url, filename, old_age)
-        if error is not None:
-            if error.exc_info and getattr(error.exc_info[1], 'expected', False):
-                self.fail(f'Expected unrestricted download but got: {error}')
-            self.skipTest(f'Download failed: {error}')
-        self.assertTrue(can_download)
+        try:
+            can_download = _download_restricted(url, filename, old_age)
+        except DownloadError as err:
+            if _is_expected_error(err):
+                self.fail(f'Expected unrestricted download but got: {err}')
+            self.skipTest(f'Download failed: {err}')
+        else:
+            self.assertTrue(can_download)
 
-        restricted, error = _download_restricted(url, filename, age)
-        if error is not None:
-            expected = error.exc_info and getattr(error.exc_info[1], 'expected', False)
-            if expected:
+        try:
+            restricted = _download_restricted(url, filename, age)
+        except DownloadError as err:
+            if _is_expected_error(err):
                 return
-            self.skipTest(f'Download failed: {error}')
-        self.assertFalse(restricted)
+            self.skipTest(f'Download failed: {err}')
+        else:
+            self.assertFalse(restricted)
 
     def test_youtube(self):
         self._assert_restricted('HtVdAasjOgU', 'HtVdAasjOgU.mp4', 10)
