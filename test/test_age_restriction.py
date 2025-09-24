@@ -14,7 +14,18 @@ from yt_dlp.utils import DownloadError
 
 
 def _is_expected_error(err):
-    return err.exc_info and getattr(err.exc_info[1], 'expected', False)
+    if not err.exc_info:
+        return False
+
+    exc = err.exc_info[1]
+    if getattr(exc, 'expected', False):
+        return True
+
+    cause = getattr(exc, 'exc_info', None)
+    if not cause:
+        return False
+
+    return getattr(cause[1], 'expected', False)
 
 
 def _download_restricted(url, filename, age):
@@ -31,34 +42,34 @@ def _download_restricted(url, filename, age):
     json_filename = os.path.splitext(filename)[0] + '.info.json'
     try_rm(json_filename)
     downloaded = False
+    error = None
     try:
         ydl.download([url])
         downloaded = os.path.exists(json_filename)
+    except DownloadError as err:
+        error = err
     finally:
         try_rm(json_filename)
-    return downloaded
+    return downloaded, error
 
 
 @is_download_test
 class TestAgeRestriction(unittest.TestCase):
     def _assert_restricted(self, url, filename, age, old_age=None):
-        try:
-            can_download = _download_restricted(url, filename, old_age)
-        except DownloadError as err:
+        can_download, err = _download_restricted(url, filename, old_age)
+        if err:
             if _is_expected_error(err):
                 self.fail(f'Expected unrestricted download but got: {err}')
             self.skipTest(f'Download failed: {err}')
-        else:
-            self.assertTrue(can_download)
+        self.assertTrue(can_download)
 
-        try:
-            restricted = _download_restricted(url, filename, age)
-        except DownloadError as err:
+        restricted, err = _download_restricted(url, filename, age)
+        if err:
             if _is_expected_error(err):
+                self.assertFalse(restricted)
                 return
             self.skipTest(f'Download failed: {err}')
-        else:
-            self.assertFalse(restricted)
+        self.assertFalse(restricted)
 
     def test_youtube(self):
         self._assert_restricted('HtVdAasjOgU', 'HtVdAasjOgU.mp4', 10)
