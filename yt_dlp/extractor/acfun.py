@@ -1,4 +1,4 @@
-from urllib.parse import parse_qs, urlparse
+import urllib.parse
 
 from .common import InfoExtractor
 from ..utils import (
@@ -6,10 +6,12 @@ from ..utils import (
     format_field,
     int_or_none,
     parse_codecs,
-    parse_qs as compat_parse_qs,
     str_or_none,
     traverse_obj,
     update_url_query,
+)
+from ..utils import (
+    parse_qs as compat_parse_qs,
 )
 
 
@@ -102,8 +104,8 @@ class AcFunVideoIE(AcFunVideoBaseIE):
         playlist_id = video_id.partition('_')[0]
         if video_id == playlist_id and len(video_list) > 1 and self._yes_playlist(playlist_id, video_id):
             entries = []
-            parsed_url = urlparse(url)
-            query = parse_qs(parsed_url.query, keep_blank_values=True)
+            parsed_url = urllib.parse.urlparse(url)
+            query = urllib.parse.parse_qs(parsed_url.query, keep_blank_values=True)
             for idx, part_video_info in enumerate(video_list, start=1):
                 part_suffix = '' if idx == 1 else f'_{idx}'
                 part_id = f'{playlist_id}{part_suffix}'
