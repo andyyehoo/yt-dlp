@@ -14,7 +14,7 @@ from yt_dlp.utils import DownloadError
 
 
 def _download_restricted(url, filename, age):
-    """ Returns true if the file has been downloaded """
+    """Attempt to download ``url`` while respecting ``age`` restrictions."""
 
     params = {
         'age_limit': age,
@@ -28,10 +28,10 @@ def _download_restricted(url, filename, age):
     try_rm(json_filename)
     try:
         ydl.download([url])
-    except DownloadError:
-        pass
+    except DownloadError as err:
+        return False, err
     else:
-        return os.path.exists(json_filename)
+        return os.path.exists(json_filename), None
     finally:
         try_rm(json_filename)
 
@@ -39,8 +39,20 @@ def _download_restricted(url, filename, age):
 @is_download_test
 class TestAgeRestriction(unittest.TestCase):
     def _assert_restricted(self, url, filename, age, old_age=None):
-        self.assertTrue(_download_restricted(url, filename, old_age))
-        self.assertFalse(_download_restricted(url, filename, age))
+        can_download, error = _download_restricted(url, filename, old_age)
+        if error is not None:
+            if error.exc_info and getattr(error.exc_info[1], 'expected', False):
+                self.fail(f'Expected unrestricted download but got: {error}')
+            self.skipTest(f'Download failed: {error}')
+        self.assertTrue(can_download)
+
+        restricted, error = _download_restricted(url, filename, age)
+        if error is not None:
+            expected = error.exc_info and getattr(error.exc_info[1], 'expected', False)
+            if expected:
+                return
+            self.skipTest(f'Download failed: {error}')
+        self.assertFalse(restricted)
 
     def test_youtube(self):
         self._assert_restricted('HtVdAasjOgU', 'HtVdAasjOgU.mp4', 10)

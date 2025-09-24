@@ -52,21 +52,19 @@ class AcFunPlaylistTest(unittest.TestCase):
         self.assertEqual(result['description'], 'Sample description')
         self.assertEqual(result['uploader'], 'Uploader Name')
         self.assertEqual(result['uploader_id'], 'uploader-id')
+        entry_urls = [entry['url'] for entry in result['entries']]
+        entry_ids = [entry['id'] for entry in result['entries']]
+        entry_titles = [entry['title'] for entry in result['entries']]
+
         self.assertEqual(
-            [entry['url'] for entry in result['entries']],
+            entry_urls,
             [
                 'https://www.acfun.cn/v/ac12345?foo=bar',
                 'https://www.acfun.cn/v/ac12345_2?foo=bar',
             ],
         )
-        self.assertEqual(
-            [entry['id'] for entry in result['entries']],
-            ['12345', '12345_2'],
-        )
-        self.assertEqual(
-            [entry['title'] for entry in result['entries']],
-            ['Episode 1', 'Episode 2'],
-        )
+        self.assertEqual(entry_ids, ['12345', '12345_2'])
+        self.assertEqual(entry_titles, ['Episode 1', 'Episode 2'])
         self.assertTrue(all(entry['ie_key'] == 'AcFunVideo' for entry in result['entries']))
 
 
