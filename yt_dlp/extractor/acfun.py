@@ -110,6 +110,14 @@ class AcFunVideoIE(AcFunVideoBaseIE):
             'thumbnail': r're:^https?://.*\.(jpg|jpeg)',
             'description': 'md5:67583aaf3a0f933bd606bc8a2d3ebb17',
         },
+    }, {
+        # multipart page
+        'url': 'https://www.acfun.cn/v/ac35468952',
+        'info_dict': {
+            'id': '35468952',
+            'title': '【动画剧集】Rocket & Groot Season 1（2022）/火箭浣熊与格鲁特第1季',
+        },
+        'playlist_count': 3,
     }]
 
     def _real_extract(self, url):
